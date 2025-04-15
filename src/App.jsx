@@ -1,21 +1,57 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { ChromePicker } from 'react-color';
 import { toPng } from 'html-to-image';
 import { uploadEmojiToSlack, isSlackConfigured } from './services/slackService';
 
 function App() {
   const [text, setText] = useState('');
-  const [fontSize, setFontSize] = useState(48);
   const [color, setColor] = useState('#000000');
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showBgColorPicker, setShowBgColorPicker] = useState(false);
   const previewRef = useRef(null);
+  const textRef = useRef(null);
   const containerRef = useRef(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
   const slackEnabled = isSlackConfigured();
+
+  const calculateFontSize = () => {
+    if (!textRef.current || !containerRef.current) return;
+
+    const container = containerRef.current;
+    const textElement = textRef.current;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+
+    // Start with a large font size
+    let fontSize = 100;
+    textElement.style.fontSize = `${fontSize}px`;
+
+    // Binary search for the optimal font size
+    let min = 1;
+    let max = 100;
+
+    while (min <= max) {
+      fontSize = Math.floor((min + max) / 2);
+      textElement.style.fontSize = `${fontSize}px`;
+
+      if (textElement.scrollWidth <= containerWidth && textElement.scrollHeight <= containerHeight) {
+        min = fontSize + 1;
+      } else {
+        max = fontSize - 1;
+      }
+    }
+
+    // Set the final font size slightly smaller to ensure it fits
+    fontSize = max - 1;
+    textElement.style.fontSize = `${fontSize}px`;
+  };
+
+  useEffect(() => {
+    calculateFontSize();
+  }, [text, backgroundColor]);
 
   const generateEmoji = async () => {
     if (!text) return null;
@@ -29,10 +65,10 @@ function App() {
       }
 
       const dataUrl = await toPng(previewRef.current, {
-        width: 128,
-        height: 128,
+        width: 512,
+        height: 512,
         quality: 1,
-        pixelRatio: 1
+        pixelRatio: 2
       });
       
       const response = await fetch(dataUrl);
@@ -76,7 +112,7 @@ function App() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8">
-      <div className="w-full max-w-4xl px-4">
+      <div className="w-full max-w-2xl mx-auto px-4">
         <h1 className="text-3xl font-bold text-center mb-8">
           Slack 이모지 생성기
         </h1>
@@ -88,28 +124,16 @@ function App() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 텍스트
               </label>
-              <input
-                type="text"
+              <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
                 placeholder="이모지 텍스트 입력"
+                rows="3"
               />
             </div>
             
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                폰트 크기: {fontSize}px
-              </label>
-              <input
-                type="range"
-                min="12"
-                max="72"
-                value={fontSize}
-                onChange={(e) => setFontSize(Number(e.target.value))}
-                className="w-full"
-              />
-            </div>
+
             
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -175,15 +199,17 @@ function App() {
                 style={{ backgroundColor }}
               >
                 <span
+                  ref={textRef}
                   style={{
                     color,
-                    fontSize: `${fontSize}px`,
-                    maxWidth: '100%',
-                    padding: '0 4px',
+                    maxWidth: '90%',
+                    maxHeight: '90%',
+                    padding: '4px',
                     textAlign: 'center',
                     wordBreak: 'break-word',
                     overflowWrap: 'break-word',
                     display: 'block',
+                    whiteSpace: 'pre-wrap',
                     lineHeight: 1.2
                   }}
                 >
