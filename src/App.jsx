@@ -20,6 +20,7 @@ function App() {
   const [isBold, setIsBold] = useState(false);
   const [isItalic, setIsItalic] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
+  const [textAlign, setTextAlign] = useState('center');
   const previewRef = useRef(null);
   const textRef = useRef(null);
   const containerRef = useRef(null);
@@ -158,29 +159,59 @@ function App() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  텍스트 스타일
-                </label>
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => setIsBold(!isBold)}
-                    className={`px-4 py-2 border rounded-md ${isBold ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
-                  >
-                    <strong>B</strong>
-                  </button>
-                  <button
-                    onClick={() => setIsItalic(!isItalic)}
-                    className={`px-4 py-2 border rounded-md ${isItalic ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
-                  >
-                    <i>I</i>
-                  </button>
-                  <button
-                    onClick={() => setIsStrikethrough(!isStrikethrough)}
-                    className={`px-4 py-2 border rounded-md ${isStrikethrough ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
-                  >
-                    <span className="line-through">S</span>
-                  </button>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    텍스트 스타일
+                  </label>
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => setIsBold(!isBold)}
+                      className={`px-4 py-2 border rounded-md ${isBold ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
+                    >
+                      <strong>B</strong>
+                    </button>
+                    <button
+                      onClick={() => setIsItalic(!isItalic)}
+                      className={`px-4 py-2 border rounded-md ${isItalic ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
+                    >
+                      <i>I</i>
+                    </button>
+                    <button
+                      onClick={() => setIsStrikethrough(!isStrikethrough)}
+                      className={`px-4 py-2 border rounded-md ${isStrikethrough ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
+                    >
+                      <span className="line-through">S</span>
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    텍스트 정렬
+                  </label>
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={() => setTextAlign('left')}
+                      className={`px-4 py-2 border rounded-md ${textAlign === 'left' ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
+                      title="왼쪽 정렬"
+                    >
+                      ←
+                    </button>
+                    <button
+                      onClick={() => setTextAlign('center')}
+                      className={`px-4 py-2 border rounded-md ${textAlign === 'center' ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
+                      title="가운데 정렬"
+                    >
+                      ↔
+                    </button>
+                    <button
+                      onClick={() => setTextAlign('right')}
+                      className={`px-4 py-2 border rounded-md ${textAlign === 'right' ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
+                      title="오른쪽 정렬"
+                    >
+                      →
+                    </button>
+                  </div>
                 </div>
               </div>
             
@@ -259,7 +290,7 @@ function App() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    textAlign: 'center',
+                    textAlign,
                     whiteSpace: 'pre',
                     lineHeight: 1.2,
                     fontFamily: selectedFont.value,
