@@ -3,12 +3,23 @@ import { ChromePicker } from 'react-color';
 import { toPng } from 'html-to-image';
 import { uploadEmojiToSlack, isSlackConfigured } from './services/slackService';
 
+const FONTS = [
+  { name: '기본체', value: 'Pretendard' },
+  { name: '둥근체', value: 'Poor Story' },
+  { name: '고딕체', value: 'Black Han Sans' },
+  { name: '손글씨체', value: 'Nanum Pen Script' }
+];
+
 function App() {
   const [text, setText] = useState('');
   const [color, setColor] = useState('#000000');
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showBgColorPicker, setShowBgColorPicker] = useState(false);
+  const [selectedFont, setSelectedFont] = useState(FONTS[0]);
+  const [isBold, setIsBold] = useState(false);
+  const [isItalic, setIsItalic] = useState(false);
+  const [isStrikethrough, setIsStrikethrough] = useState(false);
   const previewRef = useRef(null);
   const textRef = useRef(null);
   const containerRef = useRef(null);
@@ -114,18 +125,61 @@ function App() {
         <div className="bg-white rounded-lg shadow-lg p-6 mx-auto">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                텍스트
-              </label>
-              <textarea
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
-                placeholder="이모지 텍스트 입력"
-                rows="3"
-              />
-            </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  텍스트
+                </label>
+                <textarea
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
+                  placeholder="이모지 텍스트 입력"
+                  rows="3"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  폰트
+                </label>
+                <select
+                  value={selectedFont.value}
+                  onChange={(e) => setSelectedFont(FONTS.find(font => font.value === e.target.value))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                >
+                  {FONTS.map(font => (
+                    <option key={font.value} value={font.value}>
+                      {font.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  텍스트 스타일
+                </label>
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => setIsBold(!isBold)}
+                    className={`px-4 py-2 border rounded-md ${isBold ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
+                  >
+                    <strong>B</strong>
+                  </button>
+                  <button
+                    onClick={() => setIsItalic(!isItalic)}
+                    className={`px-4 py-2 border rounded-md ${isItalic ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
+                  >
+                    <i>I</i>
+                  </button>
+                  <button
+                    onClick={() => setIsStrikethrough(!isStrikethrough)}
+                    className={`px-4 py-2 border rounded-md ${isStrikethrough ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
+                  >
+                    <span className="line-through">S</span>
+                  </button>
+                </div>
+              </div>
             
 
             
@@ -205,7 +259,11 @@ function App() {
                     textAlign: 'center',
                     wordBreak: 'break-word',
                     whiteSpace: 'pre-wrap',
-                    lineHeight: 1.2
+                    lineHeight: 1.2,
+                    fontFamily: selectedFont.value,
+                    fontWeight: isBold ? 'bold' : 'normal',
+                    fontStyle: isItalic ? 'italic' : 'normal',
+                    textDecoration: isStrikethrough ? 'line-through' : 'none'
                   }}
                 >
                   {text || 'ABC'}
