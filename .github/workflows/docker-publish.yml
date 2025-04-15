@@ -28,9 +28,9 @@ jobs:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_TOKEN }}
 
-      - name: Generate timestamp
-        id: timestamp
-        run: echo "timestamp=$(date +'%Y%m%d_%H%M%S')" >> $GITHUB_OUTPUT
+      - name: Extract release version
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -39,6 +39,6 @@ jobs:
           push: true
           tags: |
             ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.timestamp.outputs.timestamp }}
+            ${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
           cache-from: type=registry,ref=${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:buildcache
           cache-to: type=registry,ref=${{ env.DOCKER_HUB_USERNAME }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
