@@ -33,7 +33,7 @@ function App() {
 
     const textElement = textRef.current;
     const containerSize = 128; // Fixed size for both preview and final image
-    const padding = 16; // Padding on all sides
+    const padding = 12; // Padding on all sides
     const availableSize = containerSize - (padding * 2);
 
     // Start with a large font size
@@ -48,10 +48,14 @@ function App() {
       fontSize = Math.floor((min + max) / 2);
       textElement.style.fontSize = `${fontSize}px`;
 
-      if (textElement.scrollWidth <= availableSize && 
-          textElement.scrollHeight <= availableSize) {
+      const isWidthOk = textElement.scrollWidth <= availableSize;
+      const isHeightOk = textElement.scrollHeight <= availableSize;
+
+      if (isWidthOk && isHeightOk) {
+        // Try a slightly larger size
         min = fontSize + 1;
       } else {
+        // Text doesn't fit, try smaller
         max = fontSize - 1;
       }
     }
@@ -249,20 +253,20 @@ function App() {
                   ref={textRef}
                   style={{
                     color,
-                    width: '96px',
-                    height: '96px',
-                    margin: '16px',
+                    width: '104px',
+                    height: '104px',
+                    margin: '12px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     textAlign: 'center',
-                    wordBreak: 'break-word',
-                    whiteSpace: 'pre-wrap',
+                    whiteSpace: 'pre',
                     lineHeight: 1.2,
                     fontFamily: selectedFont.value,
                     fontWeight: isBold ? 'bold' : 'normal',
                     fontStyle: isItalic ? 'italic' : 'normal',
-                    textDecoration: isStrikethrough ? 'line-through' : 'none'
+                    textDecoration: isStrikethrough ? 'line-through' : 'none',
+                    overflow: 'hidden'
                   }}
                 >
                   {text || 'ABC'}
