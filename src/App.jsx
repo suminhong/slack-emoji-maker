@@ -24,6 +24,31 @@ function App() {
   const [textAlign, setTextAlign] = useState('center');
   const previewRef = useRef(null);
   const textRef = useRef(null);
+
+  // 텍스트 크기 자동 조절 함수
+  const adjustTextSize = () => {
+    if (!textRef.current || !previewRef.current) return;
+
+    const container = previewRef.current;
+    const textElement = textRef.current;
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+
+    // 초기 폰트 크기 설정
+    let fontSize = 100;
+    textElement.style.fontSize = `${fontSize}px`;
+
+    // 텍스트가 컨테이너를 벗어나지 않도록 폰트 크기 조절
+    while ((textElement.scrollWidth > containerWidth || textElement.scrollHeight > containerHeight) && fontSize > 1) {
+      fontSize -= 1;
+      textElement.style.fontSize = `${fontSize}px`;
+    }
+  };
+
+  // 텍스트, 폰트, 정렬 변경시 크기 재조정
+  useEffect(() => {
+    adjustTextSize();
+  }, [text, selectedFont, textAlign]);
   const containerRef = useRef(null);
 
   const [isUploading, setIsUploading] = useState(false);
@@ -34,36 +59,28 @@ function App() {
     if (!textRef.current) return;
 
     const textElement = textRef.current;
-    const containerSize = 128; // Fixed size for both preview and final image
-    const padding = 8; // Reduced padding for larger text
+    const containerSize = 128;
+    const padding = 8;
     const availableSize = containerSize - (padding * 2);
-
-    // Start with a larger font size
-    let fontSize = 120;
-    textElement.style.fontSize = `${fontSize}px`;
 
     // Binary search for the optimal font size
     let min = 1;
     let max = 120;
+    let fontSize = max;
 
     while (min <= max) {
       fontSize = Math.floor((min + max) / 2);
       textElement.style.fontSize = `${fontSize}px`;
 
-      const isWidthOk = textElement.scrollWidth <= availableSize;
-      const isHeightOk = textElement.scrollHeight <= availableSize;
-
-      if (isWidthOk && isHeightOk) {
-        // Try a slightly larger size
+      if (textElement.scrollWidth <= availableSize && textElement.scrollHeight <= availableSize) {
         min = fontSize + 1;
       } else {
-        // Text doesn't fit, try smaller
         max = fontSize - 1;
       }
     }
 
     // Set the final font size
-    fontSize = max;
+    fontSize = Math.max(1, max);
     textElement.style.fontSize = `${fontSize}px`;
   };
 
