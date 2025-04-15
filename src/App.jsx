@@ -34,16 +34,16 @@ function App() {
 
     const textElement = textRef.current;
     const containerSize = 128; // Fixed size for both preview and final image
-    const padding = 12; // Padding on all sides
+    const padding = 8; // Reduced padding for larger text
     const availableSize = containerSize - (padding * 2);
 
-    // Start with a large font size
-    let fontSize = 100;
+    // Start with a larger font size
+    let fontSize = 120;
     textElement.style.fontSize = `${fontSize}px`;
 
     // Binary search for the optimal font size
     let min = 1;
-    let max = 100;
+    let max = 120;
 
     while (min <= max) {
       fontSize = Math.floor((min + max) / 2);
@@ -284,9 +284,9 @@ function App() {
                   ref={textRef}
                   style={{
                     color,
-                    width: '104px',
-                    height: '104px',
-                    margin: '12px',
+                    width: '112px',
+                    height: '112px',
+                    margin: '8px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
