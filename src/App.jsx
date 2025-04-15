@@ -7,7 +7,12 @@ const FONTS = [
   { name: '기본체', value: 'Pretendard' },
   { name: '둥근체', value: 'Poor Story' },
   { name: '고딕체', value: 'Black Han Sans' },
-  { name: '손글씨체', value: 'Nanum Pen Script' }
+  { name: '손글씨체', value: 'Nanum Pen Script' },
+  { name: '궁서체', value: 'Gowun Batang' },
+  { name: '명조체', value: 'Nanum Myeongjo' },
+  { name: '동글체', value: 'Dongle' },
+  { name: '스타일체', value: 'Stylish' },
+  { name: '코딩체', value: 'Nanum Gothic Coding' }
 ];
 
 function App() {
