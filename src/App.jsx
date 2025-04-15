@@ -18,12 +18,12 @@ function App() {
   const slackEnabled = isSlackConfigured();
 
   const calculateFontSize = () => {
-    if (!textRef.current || !containerRef.current) return;
+    if (!textRef.current) return;
 
-    const container = containerRef.current;
     const textElement = textRef.current;
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
+    const containerSize = 128; // Fixed size for both preview and final image
+    const padding = 16; // Padding on all sides
+    const availableSize = containerSize - (padding * 2);
 
     // Start with a large font size
     let fontSize = 100;
@@ -37,15 +37,16 @@ function App() {
       fontSize = Math.floor((min + max) / 2);
       textElement.style.fontSize = `${fontSize}px`;
 
-      if (textElement.scrollWidth <= containerWidth && textElement.scrollHeight <= containerHeight) {
+      if (textElement.scrollWidth <= availableSize && 
+          textElement.scrollHeight <= availableSize) {
         min = fontSize + 1;
       } else {
         max = fontSize - 1;
       }
     }
 
-    // Set the final font size slightly smaller to ensure it fits
-    fontSize = max - 1;
+    // Set the final font size
+    fontSize = max;
     textElement.style.fontSize = `${fontSize}px`;
   };
 
@@ -57,18 +58,11 @@ function App() {
     if (!text) return null;
     
     try {
-      // Ensure the container is properly centered before capture
-      if (containerRef.current) {
-        containerRef.current.style.display = 'flex';
-        containerRef.current.style.justifyContent = 'center';
-        containerRef.current.style.alignItems = 'center';
-      }
-
       const dataUrl = await toPng(previewRef.current, {
-        width: 512,
-        height: 512,
+        width: 128,
+        height: 128,
         quality: 1,
-        pixelRatio: 2
+        pixelRatio: 4
       });
       
       const response = await fetch(dataUrl);
@@ -198,23 +192,24 @@ function App() {
                 className="w-32 h-32 flex items-center justify-center"
                 style={{ backgroundColor }}
               >
-                <span
+                <div
                   ref={textRef}
                   style={{
                     color,
-                    maxWidth: '90%',
-                    maxHeight: '90%',
-                    padding: '4px',
+                    width: '96px',
+                    height: '96px',
+                    margin: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
                     textAlign: 'center',
                     wordBreak: 'break-word',
-                    overflowWrap: 'break-word',
-                    display: 'block',
                     whiteSpace: 'pre-wrap',
                     lineHeight: 1.2
                   }}
                 >
                   {text || 'ABC'}
-                </span>
+                </div>
               </div>
             </div>
           </div>
