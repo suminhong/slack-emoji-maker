@@ -1,6 +1,0 @@
-apiVersion: v2
-name: slack-emoji-maker
-description: A Helm chart for Slack Emoji Maker web application
-type: application
-version: 0.1.0
-appVersion: "v0.0.1"
