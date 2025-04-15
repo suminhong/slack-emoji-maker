@@ -11,6 +11,7 @@ function App() {
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [showBgColorPicker, setShowBgColorPicker] = useState(false);
   const previewRef = useRef(null);
+  const containerRef = useRef(null);
 
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState('');
@@ -20,6 +21,13 @@ function App() {
     if (!text) return null;
     
     try {
+      // Ensure the container is properly centered before capture
+      if (containerRef.current) {
+        containerRef.current.style.display = 'flex';
+        containerRef.current.style.justifyContent = 'center';
+        containerRef.current.style.alignItems = 'center';
+      }
+
       const dataUrl = await toPng(previewRef.current, {
         width: 128,
         height: 128,
@@ -67,13 +75,14 @@ function App() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-center mb-8">
-        Slack 이모지 생성기
-      </h1>
-      
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8">
+      <div className="w-full max-w-4xl px-4">
+        <h1 className="text-3xl font-bold text-center mb-8">
+          Slack 이모지 생성기
+        </h1>
+        
+        <div className="bg-white rounded-lg shadow-lg p-6 mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -159,14 +168,28 @@ function App() {
             <label className="block text-sm font-medium text-gray-700 mb-4">
               미리보기
             </label>
-            <div
-              ref={previewRef}
-              className="w-32 h-32 mx-auto border border-gray-300 rounded-md flex items-center justify-center"
-              style={{ backgroundColor }}
-            >
-              <span style={{ color, fontSize: `${fontSize}px` }}>
-                {text || 'ABC'}
-              </span>
+            <div ref={containerRef} className="w-32 h-32 mx-auto border border-gray-300 rounded-md flex items-center justify-center overflow-hidden">
+              <div
+                ref={previewRef}
+                className="w-32 h-32 flex items-center justify-center"
+                style={{ backgroundColor }}
+              >
+                <span
+                  style={{
+                    color,
+                    fontSize: `${fontSize}px`,
+                    maxWidth: '100%',
+                    padding: '0 4px',
+                    textAlign: 'center',
+                    wordBreak: 'break-word',
+                    overflowWrap: 'break-word',
+                    display: 'block',
+                    lineHeight: 1.2
+                  }}
+                >
+                  {text || 'ABC'}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -195,6 +218,7 @@ function App() {
               {!slackEnabled && ' (토큰 필요)'}
             </button>
           </div>
+        </div>
         </div>
       </div>
     </div>
