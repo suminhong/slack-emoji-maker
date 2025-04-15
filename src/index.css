@@ -2,6 +2,47 @@
 @tailwind components;
 @tailwind utilities;
 
+
+@font-face {
+  font-family: '학교안심체';
+  src: url('/public/fonts/Hakgyoansim Dunggeunmiso TTF B.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'PyeongChangPeace';
+  src: url('/public/fonts/PyeongChangPeace-Bold.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: '배민한나체';
+  src: url('/public/fonts/BMHANNA_11yrs_otf.otf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: '배민을지로체';
+  src: url('/public/fonts/BMEULJIROTTF.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: '여기어때잘난체';
+  src: url('/public/fonts/Jalnan2TTF.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   line-height: 1.5;

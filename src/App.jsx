@@ -4,15 +4,11 @@ import { toPng } from 'html-to-image';
 import { uploadEmojiToSlack, isSlackConfigured } from './services/slackService';
 
 const FONTS = [
-  { name: '기본체', value: 'Pretendard' },
-  { name: '둥근체', value: 'Poor Story' },
-  { name: '고딕체', value: 'Black Han Sans' },
-  { name: '손글씨체', value: 'Nanum Pen Script' },
-  { name: '궁서체', value: 'Gowun Batang' },
-  { name: '명조체', value: 'Nanum Myeongjo' },
-  { name: '동글체', value: 'Dongle' },
-  { name: '스타일체', value: 'Stylish' },
-  { name: '코딩체', value: 'Nanum Gothic Coding' }
+  { name: '배민한나체', value: '배민한나체' },
+  { name: '배민을지로체', value: '배민을지로체' },
+  { name: '평창평화체', value: 'PyeongChangPeace' },
+  { name: '학교안심체', value: '학교안심체' },
+  { name: '여기어때잘난체', value: '여기어때잘난체' },
 ];
 
 function App() {
