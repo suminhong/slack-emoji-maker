@@ -116,15 +116,14 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-8">
-      <div className="w-full max-w-2xl mx-auto px-4">
+    <div className="w-full max-w-md mx-auto px-4">
         <h1 className="text-3xl font-bold text-center mb-8">
           Slack 이모지 생성기
         </h1>
         
-        <div className="bg-white rounded-lg shadow-lg p-6 mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
+        <div className="bg-white rounded-lg shadow-lg p-6">
+          <div className="space-y-6">
+          <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   텍스트
@@ -279,7 +278,7 @@ function App() {
               {error}
             </div>
           )}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex justify-center space-x-4">
             <button
               onClick={handleDownload}
               className="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50"
@@ -297,7 +296,6 @@ function App() {
               {!slackEnabled && ' (토큰 필요)'}
             </button>
           </div>
-        </div>
         </div>
       </div>
     </div>
