@@ -29,20 +29,27 @@ function App() {
   const adjustTextSize = () => {
     if (!textRef.current || !previewRef.current) return;
 
-    const container = previewRef.current;
     const textElement = textRef.current;
-    const containerWidth = container.clientWidth;
-    const containerHeight = container.clientHeight;
+    const containerSize = 112; // 128px - (8px padding * 2)
 
-    // 초기 폰트 크기 설정
-    let fontSize = 100;
-    textElement.style.fontSize = `${fontSize}px`;
+    // Binary search for optimal font size
+    let min = 1;
+    let max = 100;
 
-    // 텍스트가 컨테이너를 벗어나지 않도록 폰트 크기 조절
-    while ((textElement.scrollWidth > containerWidth || textElement.scrollHeight > containerHeight) && fontSize > 1) {
-      fontSize -= 1;
+    while (min <= max) {
+      const fontSize = Math.floor((min + max) / 2);
       textElement.style.fontSize = `${fontSize}px`;
+
+      if (textElement.scrollWidth <= containerSize && textElement.scrollHeight <= containerSize) {
+        min = fontSize + 1;
+      } else {
+        max = fontSize - 1;
+      }
     }
+
+    // Set final font size
+    const finalSize = Math.max(1, max);
+    textElement.style.fontSize = `${finalSize}px`;
   };
 
   // 텍스트, 폰트, 정렬 변경시 크기 재조정
@@ -55,38 +62,9 @@ function App() {
   const [error, setError] = useState('');
   const slackEnabled = isSlackConfigured();
 
-  const calculateFontSize = () => {
-    if (!textRef.current) return;
-
-    const textElement = textRef.current;
-    const containerSize = 128;
-    const padding = 8;
-    const availableSize = containerSize - (padding * 2);
-
-    // Binary search for the optimal font size
-    let min = 1;
-    let max = 120;
-    let fontSize = max;
-
-    while (min <= max) {
-      fontSize = Math.floor((min + max) / 2);
-      textElement.style.fontSize = `${fontSize}px`;
-
-      if (textElement.scrollWidth <= availableSize && textElement.scrollHeight <= availableSize) {
-        min = fontSize + 1;
-      } else {
-        max = fontSize - 1;
-      }
-    }
-
-    // Set the final font size
-    fontSize = Math.max(1, max);
-    textElement.style.fontSize = `${fontSize}px`;
-  };
-
   useEffect(() => {
-    calculateFontSize();
-  }, [text, backgroundColor]);
+    adjustTextSize();
+  }, [text, backgroundColor, selectedFont, textAlign, isBold, isItalic]);
 
   const generateEmoji = async () => {
     if (!text) return null;
