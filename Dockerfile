@@ -11,8 +11,8 @@ RUN npm install
 # Copy source code and public assets
 COPY . .
 
-# Expose port 5173 (Vite default)
-EXPOSE 5173
+# Expose port 8080
+EXPOSE 8080
 
 # Start the app
 CMD ["npm", "run", "dev", "--", "--host"]
