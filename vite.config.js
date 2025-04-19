@@ -7,8 +7,7 @@ export default defineConfig({
     host: true,
     allowedHosts: true,
     strictPort: true,
-    cors: true,
-    proxy: {}
+    cors: true
   },
   plugins: [
     react(),

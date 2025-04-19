@@ -1,14 +1,31 @@
 export const isSlackConfigured = () => {
-  return import.meta.env.SLACK_TOKEN !== undefined && import.meta.env.SLACK_TOKEN !== '';
+  return import.meta.env.VITE_SLACK_TOKEN !== undefined && import.meta.env.VITE_SLACK_TOKEN !== '';
+};
+
+export const listEmojis = async (searchQuery = '', page = 1) => {
+  try {
+    const response = await fetch(`http://localhost:3000/emoji/list?query=${encodeURIComponent(searchQuery)}&page=${page}`);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || '이모지 목록을 가져오는데 실패했습니다.');
+    }
+
+    return {
+      emojis: data.emojis,
+      total: data.total,
+      page: data.page,
+      perPage: data.per_page,
+      totalPages: data.total_pages
+    };
+  } catch (error) {
+    console.error('Error fetching emojis:', error);
+    throw error;
+  }
 };
 
 export const uploadEmojiToSlack = async (name, imageBlob) => {
   try {
-    const token = import.meta.env.SLACK_TOKEN;
-    if (!token) {
-      throw new Error('Slack 토큰이 설정되지 않았습니다. .env 파일을 확인해주세요.');
-    }
-
     // Convert Blob to Base64
     const reader = new FileReader();
     const base64Image = await new Promise((resolve, reject) => {
@@ -17,23 +34,20 @@ export const uploadEmojiToSlack = async (name, imageBlob) => {
       reader.readAsDataURL(imageBlob);
     });
 
-    // Upload to Slack using fetch API
-    const response = await fetch('https://slack.com/api/emoji.add', {
+    const response = await fetch('http://localhost:3000/emoji/add', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         name: name.toLowerCase().replace(/[^a-z0-9_-]/g, '_'),
-        mode: 'data',
         image: base64Image
       })
     });
 
     const data = await response.json();
-    if (!data.ok) {
-      throw new Error(data.error || '이모지 업로드에 실패했습니다.');
+    if (!response.ok) {
+      throw new Error(data.detail || '이모지 업로드에 실패했습니다.');
     }
 
     return true;

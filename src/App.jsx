@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ChromePicker } from 'react-color';
 import { toPng } from 'html-to-image';
-import { uploadEmojiToSlack, isSlackConfigured } from './services/slackService';
+import { uploadEmojiToSlack, isSlackConfigured, listEmojis } from './services/slackService';
+import EmojiList from './components/EmojiList';
+import EmojiGenerator from './components/EmojiGenerator';
 
 const FONTS = [
   { name: '배민한나체', value: '배민한나체' },
@@ -13,6 +14,13 @@ const FONTS = [
 
 function App() {
   const [text, setText] = useState('');
+  const [emojis, setEmojis] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalEmojis, setTotalEmojis] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [emojiError, setEmojiError] = useState(null);
+  const [isLoadingEmojis, setIsLoadingEmojis] = useState(false);
   const [color, setColor] = useState('#000000');
   const [backgroundColor, setBackgroundColor] = useState('#FFFFFF');
   const [showColorPicker, setShowColorPicker] = useState(false);
@@ -22,49 +30,79 @@ function App() {
   const [isItalic, setIsItalic] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
   const [textAlign, setTextAlign] = useState('center');
+  const [isUploading, setIsUploading] = useState(false);
+  const [error, setError] = useState('');
+  
   const previewRef = useRef(null);
   const textRef = useRef(null);
+  const containerRef = useRef(null);
+  
+  const slackEnabled = isSlackConfigured();
 
   // 텍스트 크기 자동 조절 함수
   const adjustTextSize = () => {
     if (!textRef.current || !previewRef.current) return;
 
     const textElement = textRef.current;
-    const containerSize = 112; // 128px - (8px padding * 2)
+    const containerWidth = 112; // 128px - (8px padding * 2)
+    const containerHeight = 112;
 
     // Binary search for optimal font size
     let min = 1;
-    let max = 100;
+    let max = 200; // Increased max size for better scaling
 
     while (min <= max) {
-      const fontSize = Math.floor((min + max) / 2);
-      textElement.style.fontSize = `${fontSize}px`;
+      const mid = Math.floor((min + max) / 2);
+      textElement.style.fontSize = `${mid}px`;
 
-      if (textElement.scrollWidth <= containerSize && textElement.scrollHeight <= containerSize) {
-        min = fontSize + 1;
+      if (textElement.scrollWidth <= containerWidth && textElement.scrollHeight <= containerHeight) {
+        min = mid + 1;
       } else {
-        max = fontSize - 1;
+        max = mid - 1;
       }
     }
 
-    // Set final font size
-    const finalSize = Math.max(1, max);
-    textElement.style.fontSize = `${finalSize}px`;
+    // Use 90% of the found size for safety margin
+    const finalSize = Math.floor(max * 0.9);
+    textElement.style.fontSize = `${Math.max(1, finalSize)}px`;
   };
 
   // 텍스트, 폰트, 정렬 변경시 크기 재조정
   useEffect(() => {
     adjustTextSize();
   }, [text, selectedFont, textAlign]);
-  const containerRef = useRef(null);
 
-  const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState('');
-  const slackEnabled = isSlackConfigured();
 
   useEffect(() => {
     adjustTextSize();
   }, [text, backgroundColor, selectedFont, textAlign, isBold, isItalic]);
+
+  const loadEmojis = async () => {
+    setIsLoadingEmojis(true);
+    setEmojiError(null);
+    try {
+      const result = await listEmojis(searchQuery, currentPage);
+      setEmojis(result.emojis);
+      setTotalPages(result.totalPages);
+      setTotalEmojis(result.total);
+    } catch (error) {
+      console.error('Error loading emojis:', error);
+      setEmojiError(error.message);
+      setEmojis([]);
+      setTotalPages(1);
+      setTotalEmojis(0);
+    } finally {
+      setIsLoadingEmojis(false);
+    }
+  };
+
+  useEffect(() => {
+    setCurrentPage(1); // 검색어가 변경되면 첫 페이지로 돌아가기
+  }, [searchQuery]);
+
+  useEffect(() => {
+    loadEmojis();
+  }, [searchQuery, currentPage]);
 
   const generateEmoji = async () => {
     if (!text) return null;
@@ -117,216 +155,51 @@ function App() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto px-4">
-        <h1 className="text-3xl font-bold text-center mb-8">
-          Slack 이모지 생성기
-        </h1>
-        
-        <div className="bg-white rounded-lg shadow-lg p-6">
-          <div className="space-y-6">
-          <div className="space-y-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  텍스트
-                </label>
-                <textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md resize-none"
-                  placeholder="이모지 텍스트 입력"
-                  rows="3"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  폰트
-                </label>
-                <select
-                  value={selectedFont.value}
-                  onChange={(e) => setSelectedFont(FONTS.find(font => font.value === e.target.value))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md"
-                >
-                  {FONTS.map(font => (
-                    <option key={font.value} value={font.value}>
-                      {font.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    텍스트 스타일
-                  </label>
-                  <div className="flex space-x-4">
-                    <button
-                      onClick={() => setIsBold(!isBold)}
-                      className={`px-4 py-2 border rounded-md ${isBold ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
-                    >
-                      <strong>B</strong>
-                    </button>
-                    <button
-                      onClick={() => setIsItalic(!isItalic)}
-                      className={`px-4 py-2 border rounded-md ${isItalic ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
-                    >
-                      <i>I</i>
-                    </button>
-                    <button
-                      onClick={() => setIsStrikethrough(!isStrikethrough)}
-                      className={`px-4 py-2 border rounded-md ${isStrikethrough ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
-                    >
-                      <span className="line-through">S</span>
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    텍스트 정렬
-                  </label>
-                  <div className="flex space-x-4">
-                    <button
-                      onClick={() => setTextAlign('left')}
-                      className={`px-4 py-2 border rounded-md ${textAlign === 'left' ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
-                      title="왼쪽 정렬"
-                    >
-                      ←
-                    </button>
-                    <button
-                      onClick={() => setTextAlign('center')}
-                      className={`px-4 py-2 border rounded-md ${textAlign === 'center' ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
-                      title="가운데 정렬"
-                    >
-                      ↔
-                    </button>
-                    <button
-                      onClick={() => setTextAlign('right')}
-                      className={`px-4 py-2 border rounded-md ${textAlign === 'right' ? 'bg-blue-100 border-blue-500' : 'border-gray-300'}`}
-                      title="오른쪽 정렬"
-                    >
-                      →
-                    </button>
-                  </div>
-                </div>
-              </div>
-            
-
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                텍스트 색상
-              </label>
-              <div className="relative">
-                <button
-                  onClick={() => setShowColorPicker(!showColorPicker)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md flex items-center"
-                >
-                  <div
-                    className="w-6 h-6 rounded mr-2"
-                    style={{ backgroundColor: color }}
-                  />
-                  {color}
-                </button>
-                {showColorPicker && (
-                  <div className="absolute z-10 mt-2">
-                    <ChromePicker
-                      color={color}
-                      onChange={(color) => setColor(color.hex)}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                배경 색상
-              </label>
-              <div className="relative">
-                <button
-                  onClick={() => setShowBgColorPicker(!showBgColorPicker)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md flex items-center"
-                >
-                  <div
-                    className="w-6 h-6 rounded mr-2"
-                    style={{ backgroundColor: backgroundColor }}
-                  />
-                  {backgroundColor}
-                </button>
-                {showBgColorPicker && (
-                  <div className="absolute z-10 mt-2">
-                    <ChromePicker
-                      color={backgroundColor}
-                      onChange={(color) => setBackgroundColor(color.hex)}
-                    />
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-4">
-              미리보기
-            </label>
-            <div ref={containerRef} className="w-32 h-32 mx-auto border border-gray-300 rounded-md flex items-center justify-center overflow-hidden">
-              <div
-                ref={previewRef}
-                className="w-32 h-32 flex items-center justify-center"
-                style={{ backgroundColor }}
-              >
-                <div
-                  ref={textRef}
-                  style={{
-                    color,
-                    width: '112px',
-                    height: '112px',
-                    margin: '8px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign,
-                    whiteSpace: 'pre',
-                    lineHeight: 1.2,
-                    fontFamily: selectedFont.value,
-                    fontWeight: isBold ? 'bold' : 'normal',
-                    fontStyle: isItalic ? 'italic' : 'normal',
-                    textDecoration: isStrikethrough ? 'line-through' : 'none',
-                    overflow: 'hidden'
-                  }}
-                >
-                  {text || 'ABC'}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div className="mt-6 space-y-3">
-          {error && (
-            <div className="text-red-500 text-sm text-center mb-2">
-              {error}
-            </div>
-          )}
-          <div className="flex justify-center space-x-4">
-            <button
-              onClick={handleDownload}
-              className="bg-gray-600 text-white py-2 px-4 rounded-md hover:bg-gray-700 transition-colors disabled:opacity-50"
-              disabled={!text}
-            >
-              다운로드
-            </button>
-            <button
-              onClick={handleSlackUpload}
-              className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50"
-              disabled={!text || isUploading || !slackEnabled}
-              title={!slackEnabled ? 'Slack 토큰이 설정되지 않았습니다' : ''}
-            >
-              {isUploading ? '업로드 중...' : '슬랙에 추가'}
-              {!slackEnabled && ' (토큰 필요)'}
-            </button>
-          </div>
+    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6 md:p-8">
+      <div className="w-full max-w-[1800px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{minHeight: '1080px'}}>
+          <EmojiGenerator
+            text={text}
+            setText={setText}
+            color={color}
+            setColor={setColor}
+            backgroundColor={backgroundColor}
+            setBackgroundColor={setBackgroundColor}
+            showColorPicker={showColorPicker}
+            setShowColorPicker={setShowColorPicker}
+            showBgColorPicker={showBgColorPicker}
+            setShowBgColorPicker={setShowBgColorPicker}
+            selectedFont={selectedFont}
+            setSelectedFont={setSelectedFont}
+            isBold={isBold}
+            setIsBold={setIsBold}
+            isItalic={isItalic}
+            setIsItalic={setIsItalic}
+            isStrikethrough={isStrikethrough}
+            setIsStrikethrough={setIsStrikethrough}
+            textAlign={textAlign}
+            setTextAlign={setTextAlign}
+            error={error}
+            isUploading={isUploading}
+            slackEnabled={slackEnabled}
+            FONTS={FONTS}
+            previewRef={previewRef}
+            textRef={textRef}
+            containerRef={containerRef}
+            handleDownload={handleDownload}
+            handleSlackUpload={handleSlackUpload}
+          />
+          <EmojiList
+            searchQuery={searchQuery}
+            setSearchQuery={setSearchQuery}
+            emojis={emojis}
+            isLoadingEmojis={isLoadingEmojis}
+            emojiError={emojiError}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalEmojis={totalEmojis}
+            setCurrentPage={setCurrentPage}
+          />
         </div>
       </div>
     </div>
