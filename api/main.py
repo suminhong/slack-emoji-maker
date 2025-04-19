@@ -1,10 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from slack_sdk import WebClient
 from slack_sdk.errors import SlackApiError
 from dotenv import load_dotenv
 import os
-import base64
 
 # Load environment variables
 load_dotenv()
@@ -75,28 +74,41 @@ async def list_emojis(query: str = "", page: int = 1, per_page: int = 25):
             )
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/emoji/add")
-async def add_emoji(name: str, image: str):
+@app.post("/api/emojis/add")
+async def add_emoji(file: UploadFile, name: str = Form(...)):
     try:
-        # 이름 정리
+        client = WebClient(token=os.getenv("VITE_SLACK_TOKEN"))
+        
+        # Read the file content
+        contents = await file.read()
+        
+        # Convert the name to lowercase and replace invalid characters
         name = name.lower().replace(" ", "_")
         
-        # Base64 이미지 처리
-        if "base64," in image:
-            image = image.split("base64,")[1]
-        
-        result = client.emoji_add(
-            name=name,
-            image=image
-        )
-        
-        if not result["ok"]:
-            raise HTTPException(
-                status_code=500,
-                detail=result.get("error", "이모지 업로드에 실패했습니다.")
+        try:
+            # Add the emoji using base64 image data
+            response = client.admin_emoji_add(
+                name=name,
+                image=contents,  # Send raw binary data
+                team_id=os.getenv("VITE_SLACK_TEAM_ID")
             )
-        
-        return {"success": True}
-    
-    except SlackApiError as e:
+            
+            return {"success": True}
+            
+        except SlackApiError as e:
+            error_message = str(e.response["error"])
+            if error_message == "admin_not_found":
+                raise HTTPException(status_code=403, detail="'admin.teams:write' 권한이 필요합니다")
+            elif error_message == "error_name_taken":
+                raise HTTPException(status_code=400, detail="동일한 이름의 이모지가 이미 존재합니다")
+            elif error_message == "invalid_name":
+                raise HTTPException(status_code=400, detail="이모지 이름이 유효하지 않습니다")
+            elif error_message == "invalid_img":
+                raise HTTPException(status_code=400, detail="이미지 형식이 유효하지 않습니다")
+            else:
+                raise HTTPException(status_code=400, detail=f"Slack API 에러: {error_message}")
+                
+    except Exception as e:
+        print(f"Error uploading emoji: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"서버 에러: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))

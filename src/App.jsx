@@ -156,8 +156,8 @@ function App() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6 md:p-8">
-      <div className="w-full max-w-[1800px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" style={{minHeight: '1080px'}}>
+      <div className="w-full max-w-[960px] mx-auto">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-center">
           <EmojiGenerator
             text={text}
             setText={setText}

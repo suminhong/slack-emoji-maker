@@ -34,15 +34,13 @@ export const uploadEmojiToSlack = async (name, imageBlob) => {
       reader.readAsDataURL(imageBlob);
     });
 
-    const response = await fetch('http://localhost:3000/emoji/add', {
+    const formData = new FormData();
+    formData.append('file', imageBlob);
+    formData.append('name', name.toLowerCase().replace(/[^a-z0-9_-]/g, '_'));
+
+    const response = await fetch('http://localhost:3000/api/emojis/add', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        name: name.toLowerCase().replace(/[^a-z0-9_-]/g, '_'),
-        image: base64Image
-      })
+      body: formData
     });
 
     const data = await response.json();
