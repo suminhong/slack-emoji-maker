@@ -27,7 +27,7 @@ npm run build
 `.env` 파일을 생성하고 다음 값들을 설정하세요:
 
 ```
-SLACK_CLIENT_SECRET=your_slack_client_secret
+SLACK_TOKEN=your_SLACK_TOKEN
 ```
 
 ## Slack App 설정
