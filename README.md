@@ -27,8 +27,7 @@ npm run build
 `.env` 파일을 생성하고 다음 값들을 설정하세요:
 
 ```
-VITE_SLACK_CLIENT_ID=your_slack_client_id
-VITE_SLACK_CLIENT_SECRET=your_slack_client_secret
+SLACK_CLIENT_SECRET=your_slack_client_secret
 ```
 
 ## Slack App 설정

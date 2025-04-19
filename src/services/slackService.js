@@ -1,10 +1,10 @@
 export const isSlackConfigured = () => {
-  return import.meta.env.VITE_SLACK_TOKEN !== undefined && import.meta.env.VITE_SLACK_TOKEN !== '';
+  return import.meta.env.SLACK_TOKEN !== undefined && import.meta.env.SLACK_TOKEN !== '';
 };
 
 export const uploadEmojiToSlack = async (name, imageBlob) => {
   try {
-    const token = import.meta.env.VITE_SLACK_TOKEN;
+    const token = import.meta.env.SLACK_TOKEN;
     if (!token) {
       throw new Error('Slack 토큰이 설정되지 않았습니다. .env 파일을 확인해주세요.');
     }
