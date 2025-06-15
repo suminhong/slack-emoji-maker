@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ChromePicker } from 'react-color';
+import { uploadEmoji } from '../services/slackService';
+import html2canvas from 'html2canvas';
 
 function EmojiGenerator({
   text,
@@ -29,8 +31,41 @@ function EmojiGenerator({
   handleDownload,
 }) {
 
+  const [emojiName, setEmojiName] = useState(text);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+
+  const handleEmojiUpload = async () => {
+    if (!emojiName.trim()) {
+      setErrorMessage('이모지 이름을 작성해 주세요');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setErrorMessage('');
+      
+      // Canvas에서 이미지 데이터 추출
+      const canvas = await html2canvas(previewRef.current);
+      const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+      
+      // FormData 생성
+      const formData = new FormData();
+      formData.append('file', blob, `${emojiName}.png`);
+      formData.append('name', emojiName);
+
+      // 이모지 업로드
+      await uploadEmoji(formData);
+      setErrorMessage('이모지가 성공적으로 등록되었습니다! 🎉');
+    } catch (error) {
+      setErrorMessage(error.response?.data?.detail || '이모지 등록에 실패했습니다');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
-    <div style={{width: '450px', height: '750px'}} className="bg-white shadow-lg rounded-lg p-6 flex flex-col">
+    <div style={{width: '450px'}} className="bg-white shadow-lg rounded-lg p-6 flex flex-col">
       <h2 className="text-2xl font-bold text-center mb-6">이모지 생성기</h2>
       
       {/* Text input */}
@@ -173,49 +208,93 @@ function EmojiGenerator({
         </div>
       </div>
 
-      {/* Preview */}
-      <div className="flex flex-col items-center mb-4">
+      {/* Preview and Controls */}
+      <div className="mb-4">
         <label className="block text-sm font-medium text-gray-700 mb-2">
           미리보기
         </label>
-        <div ref={containerRef} className="w-32 h-32 border border-gray-300 rounded-md flex items-center justify-center overflow-hidden mb-4">
-          <div
-            ref={previewRef}
-            className="w-32 h-32 flex items-center justify-center"
-            style={{ backgroundColor }}
-          >
-            <div
-              ref={textRef}
-              style={{
-                color,
-                width: '112px',
-                height: '112px',
-                margin: '8px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                textAlign,
-                whiteSpace: text.includes('\n') ? 'pre' : 'nowrap',
-                lineHeight: text.includes('\n') ? 1.2 : 'normal',
-                wordBreak: text.includes('\n') ? 'break-all' : 'normal',
-                fontFamily: selectedFont.value,
-                fontWeight: isBold ? 'bold' : 'normal',
-                fontStyle: isItalic ? 'italic' : 'normal',
-                textDecoration: isStrikethrough ? 'line-through' : 'none',
-                overflow: 'hidden',
-              }}
-            >
-              {text || 'ABC'}
+        <div className="flex flex-col gap-3">
+          {/* Preview and Buttons */}
+          <div className="flex gap-4">
+            {/* Preview */}
+            <div ref={containerRef} className="w-32 h-32 border border-gray-300 rounded-md flex items-center justify-center overflow-hidden">
+              <div
+                ref={previewRef}
+                className="w-32 h-32 flex items-center justify-center"
+                style={{ backgroundColor }}
+              >
+                <div
+                  ref={textRef}
+                  style={{
+                    color,
+                    width: '112px',
+                    height: '112px',
+                    margin: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign,
+                    whiteSpace: text.includes('\n') ? 'pre' : 'nowrap',
+                    lineHeight: text.includes('\n') ? 1.2 : 'normal',
+                    wordBreak: text.includes('\n') ? 'break-all' : 'normal',
+                    fontFamily: selectedFont.value,
+                    fontWeight: isBold ? 'bold' : 'normal',
+                    fontStyle: isItalic ? 'italic' : 'normal',
+                    textDecoration: isStrikethrough ? 'line-through' : 'none',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {text || 'ABC'}
+                </div>
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex-1 flex flex-col gap-2 justify-center">
+              <button
+                onClick={handleDownload}
+                disabled={!text.trim()}
+                className={`w-full px-4 py-2 text-white rounded-md transition-colors ${text.trim() ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400 cursor-not-allowed'}`}
+              >
+                다운로드 받기 ⬇️
+              </button>
+              <button
+                onClick={handleEmojiUpload}
+                disabled={!text.trim() || isUploading}
+                className={`w-full px-4 py-2 text-white rounded-md transition-colors ${text.trim() && !isUploading ? 'bg-green-500 hover:bg-green-600' : 'bg-gray-400 cursor-not-allowed'}`}
+              >
+                {isUploading ? '등록 중...' : '슬랙에 등록하기 🚀'}
+              </button>
+            </div>
+          </div>
+
+          {/* Emoji Name Input and Help Text */}
+          <div className="flex gap-4">
+            <div className="w-32">
+              <input
+                type="text"
+                value={emojiName}
+                onChange={(e) => {
+                  setEmojiName(e.target.value);
+                  setErrorMessage('');
+                }}
+                className="w-full p-2 border rounded text-sm"
+              />
+              {errorMessage && (
+                <p className={`text-sm mt-1 ${errorMessage.includes('성공') ? 'text-green-600' : 'text-red-600'}`}>
+                  {errorMessage}
+                </p>
+              )}
+            </div>
+
+            {/* Help Text */}
+            <div className="flex-1 flex items-center">
+              <p className="text-sm text-gray-500">
+                이모지 이름을 작성해 주세요
+              </p>
             </div>
           </div>
         </div>
-        <button
-          onClick={handleDownload}
-          disabled={!text.trim()}
-          className={`px-6 py-2 text-white rounded-md transition-colors ${text.trim() ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-400 cursor-not-allowed'}`}
-        >
-          다운로드
-        </button>
       </div>
     </div>
   );

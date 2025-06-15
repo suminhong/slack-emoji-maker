@@ -24,20 +24,8 @@ export const listEmojis = async (searchQuery = '', page = 1) => {
   }
 };
 
-export const uploadEmojiToSlack = async (name, imageBlob) => {
+export const uploadEmoji = async (formData) => {
   try {
-    // Convert Blob to Base64
-    const reader = new FileReader();
-    const base64Image = await new Promise((resolve, reject) => {
-      reader.onload = () => resolve(reader.result.split(',')[1]);
-      reader.onerror = reject;
-      reader.readAsDataURL(imageBlob);
-    });
-
-    const formData = new FormData();
-    formData.append('file', imageBlob);
-    formData.append('name', name.toLowerCase().replace(/[^a-z0-9_-]/g, '_'));
-
     const response = await fetch('http://localhost:3000/api/emojis/add', {
       method: 'POST',
       body: formData

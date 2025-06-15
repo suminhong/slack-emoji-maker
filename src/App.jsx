@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { toPng } from 'html-to-image';
-import { uploadEmojiToSlack, isSlackConfigured, listEmojis } from './services/slackService';
+import { isSlackConfigured, listEmojis } from './services/slackService';
 import EmojiList from './components/EmojiList';
 import EmojiGenerator from './components/EmojiGenerator';
 
@@ -30,8 +30,7 @@ function App() {
   const [isItalic, setIsItalic] = useState(false);
   const [isStrikethrough, setIsStrikethrough] = useState(false);
   const [textAlign, setTextAlign] = useState('center');
-  const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState('');
+
   
   const previewRef = useRef(null);
   const textRef = useRef(null);
@@ -136,23 +135,7 @@ function App() {
     link.click();
   };
 
-  const handleSlackUpload = async () => {
-    setIsUploading(true);
-    setError('');
-    
-    try {
-      const emoji = await generateEmoji();
-      if (!emoji) return;
 
-      await uploadEmojiToSlack(text, emoji.blob);
-      alert('이모지가 성공적으로 업로드되었습니다!');
-    } catch (error) {
-      console.error('Error uploading to Slack:', error);
-      setError('슬랙 업로드 중 오류가 발생했습니다.');
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6 md:p-8">
@@ -179,15 +162,11 @@ function App() {
             setIsStrikethrough={setIsStrikethrough}
             textAlign={textAlign}
             setTextAlign={setTextAlign}
-            error={error}
-            isUploading={isUploading}
-            slackEnabled={slackEnabled}
             FONTS={FONTS}
             previewRef={previewRef}
             textRef={textRef}
             containerRef={containerRef}
             handleDownload={handleDownload}
-            handleSlackUpload={handleSlackUpload}
           />
           <EmojiList
             searchQuery={searchQuery}
